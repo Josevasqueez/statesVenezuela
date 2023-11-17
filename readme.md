@@ -1,6 +1,6 @@
 # statesVenezuela
 
-## Sobre el proyecto
+### Sobre el proyecto
 
 Este proyecto es un ejemplo de cómo usar Puppeteer para web scraping.
 

@@ -1,53 +1,57 @@
 import puppeteer from 'puppeteer';
 
-(async () => {
-  // Launch the browser and open a new blank page
+const scrapeData = async () => {
   const browser = await puppeteer.launch({ headless: 'new' });
   const page = await browser.newPage();
 
-  console.log('Browser opened. Opening page...');
-
-  // Navigate the page to a URL
   await page.goto(
     'https://es.wikipedia.org/wiki/Anexo:Municipios_de_Venezuela'
   );
-  console.log('Page loaded. Getting data...');
-  const title = await page.$('.mw-page-title-main');
-  const titleText = await title.evaluate((el) => el.textContent);
-  console.log(titleText);
 
-  // get all elements with class ".mw-headline a"
-  const elements = await page.$$('.mw-headline > a');
-  // loop through all elements
-  let i = 0;
-  let result = [];
-  for (let element of elements) {
-    // get the textContent of each element
-    const text = await page.evaluate((el) => el.textContent, element);
-    // get municipality name by ol > li
+  const data = await page.evaluate(() => {
+    const states = [];
 
-    const municipality = await page.$$(
-      `#mw-content-text > div.mw-parser-output > ol:nth-child(${
-        8 + i
-      }) > li > a:nth-child(2)`
-    );
-    let municipalities = [];
-    for (let m of municipality) {
-      const municipalityName = await page.evaluate((el) => el.textContent, m);
-      municipalities.push(municipalityName);
-    }
+    // Seleccionar los elementos que contienen la información de los estados
+    const stateElements = document.querySelectorAll('.mw-parser-output h2');
 
-    if (8 + i === 32) {
-      i = 34 - 8;
-    } else if (8 + i === 43) {
-      i = 45 - 8;
-    } else {
-      i += 3;
-    }
+    // Iterar sobre los elementos de estado
+    stateElements.forEach((stateElement) => {
+      const state = {};
 
-    result.push({ state: text, municipalities });
-  }
+      // Obtener el nombre del estado
+      state.name = stateElement.textContent.trim().split('[')[0];
+
+      // Obtener la URL de la bandera del estado
+      const flagElement = stateElement.querySelector('.mw-file-element');
+      state.flagUrl = flagElement ? flagElement.src : null;
+
+      // Obtener los municipios del estado
+      state.municipalities = [];
+      const municipalityList =
+        stateElement.nextElementSibling.nextElementSibling;
+      if (municipalityList) {
+        const municipalityElements =
+          municipalityList.querySelectorAll('li a:nth-child(2)');
+        municipalityElements.forEach((municipalityElement) => {
+          state.municipalities.push(municipalityElement.textContent.trim());
+        });
+      }
+      // Agregar el estado al arreglo
+      states.push(state);
+    });
+
+    // delete last 2 elements
+    states.pop();
+    states.pop();
+    return states;
+  });
 
   await browser.close();
+
+  return data;
+};
+
+// Llamar a la función de web scraping y mostrar los resultados
+scrapeData().then((result) => {
   console.log(result);
-})();
+});

@@ -23,14 +23,13 @@ import puppeteer from 'puppeteer';
   let result = [];
   for (let element of elements) {
     // get the textContent of each element
-    console.log(i + 8);
     const text = await page.evaluate((el) => el.textContent, element);
     // get municipality name by ol > li
 
     const municipality = await page.$$(
       `#mw-content-text > div.mw-parser-output > ol:nth-child(${
         8 + i
-      }) > li > a:nth-child(1)`
+      }) > li > a:nth-child(2)`
     );
     let municipalities = [];
     for (let m of municipality) {
